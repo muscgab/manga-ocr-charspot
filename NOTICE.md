@@ -2,7 +2,7 @@
 
 ## 中文
 
-- 代码采用 Apache License 2.0（`LICENSE`）；该许可不含模型权重。模型权重（`model.safetensors`、`model_dense.onnx`、`model_tail.onnx`、`model_single.onnx`）采用 CC BY-NC-SA 4.0（`LICENSE_MODEL`），商业使用需要另行取得授权。
+- 代码采用 Apache License 2.0（`LICENSE`）；该许可不含模型权重。模型权重（`model.safetensors`、`model.onnx`）采用 CC BY-NC-SA 4.0（`LICENSE_MODEL`），商业使用需要另行取得授权。
 - 模型从随机初始化开始训练，没有使用任何预训练权重。
 - 真实训练样本来自 [JustANormalTinkerer/animetext-ocr](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr)（revision `9c70c6b`），数据集声明为 CC BY-NC-SA 4.0。训练只用其文字标签；逐字框由模型自己在训练中生成。
 - 该数据集的图片来自 AnimeText（[arXiv 2510.07951](https://arxiv.org/abs/2510.07951)）。合成手写体用到的真实假名字形也切自 AnimeText 图片，并用 [Real-ESRGAN](https://arxiv.org/abs/2107.10833)（RealESRGAN_x4plus_anime_6B）放大 4 倍；本包不含这些字形。
@@ -12,7 +12,7 @@
 
 ## English
 
-- Code is licensed under Apache License 2.0 (`LICENSE`); this does not cover the model weights. Model weights (`model.safetensors`, `model_dense.onnx`, `model_tail.onnx`, `model_single.onnx`) are licensed under CC BY-NC-SA 4.0 (`LICENSE_MODEL`); commercial use requires separate permission.
+- Code is licensed under Apache License 2.0 (`LICENSE`); this does not cover the model weights. Model weights (`model.safetensors`, `model.onnx`) are licensed under CC BY-NC-SA 4.0 (`LICENSE_MODEL`); commercial use requires separate permission.
 - The model was trained from random initialisation; no pretrained weights were used.
 - Real training samples derive from [JustANormalTinkerer/animetext-ocr](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr) (revision `9c70c6b`), declared under CC BY-NC-SA 4.0. Only its text labels were used; character boxes were produced by the model itself during training.
 - The images of that dataset come from AnimeText ([arXiv 2510.07951](https://arxiv.org/abs/2510.07951)). The real kana glyphs used by the synthetic handwriting were also cut from AnimeText images and upscaled 4× with [Real-ESRGAN](https://arxiv.org/abs/2107.10833) (RealESRGAN_x4plus_anime_6B); this package does not contain those glyphs.

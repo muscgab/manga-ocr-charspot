@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __all__ = ["MangaOcrCharspotNano"]
 DEFAULT_DIR = Path(os.environ.get("MANGA_OCR_CHARSPOT_NANO_DIR") or Path(__file__).resolve().parent.parent)
 

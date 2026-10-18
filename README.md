@@ -46,11 +46,11 @@ End to end per crop (image already decoded; preprocessing, network, decoding and
 
 | Model | Format | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.6 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.6 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* measured on a laptop under load (load average 5–12); the Xeon was idle.
+\* measured with the 1.0.0 two-file package on a laptop under load (load average 5–12); the Xeon was idle. On the Xeon the single file and the 1.0.0 two-file package run at the same speed (technical report §6.1).
 
 **NVIDIA GPU** (RTX 2080 Ti, Read's speed protocol: per image = batch 1; per page = one page's boxes per call, p50; max img/s = best batch with CPU preprocessing in worker processes):
 
@@ -64,7 +64,7 @@ End to end per crop (image already decoded; preprocessing, network, decoding and
 
 Rows other than manga-ocr-charspot-nano are taken from the [Read leaderboard](https://github.com/muscgab/JMangaBench_Read) and the manga-ocr-nar-small model card (same machines and protocols). manga-ocr-charspot-nano was measured after `warmup()` (11 s once at start; it captures the CUDA graphs for the 17 input canvases of the development set; 3.1 GB of GPU memory afterwards). The CUDA backend pads crops of a call to a few canvas sizes and runs each canvas as one masked batch; with a 1.7M-parameter network the GPU is mostly idle, and the per-call CPU work (box decoding, NMS, ordering) sets the limit.
 
-After an idle pause the processor clocks down and the next crop is slower: on the idle Xeon (governor `powersave`) 15 ms after 1–20 s idle instead of 8.2 ms; on the RTX 2080 Ti 8.9 ms after 1–5 s and 24 ms after 20 s instead of 4.2 ms. Locking the clocks avoids it.
+After an idle pause the processor clocks down and the next crop is slower: on the idle Xeon (governor `powersave`) 15 ms after 1–20 s idle instead of about 8 ms; on the RTX 2080 Ti 8.9 ms after 1–5 s and 24 ms after 20 s instead of 4.2 ms. Locking the clocks avoids it.
 
 ## Usage
 
@@ -86,7 +86,7 @@ ocr.read("crop.png")                    # -> {"text": ..., "chars": [{"char": "�
 ocr.warmup()                            # CUDA backend: capture the CUDA graphs once (about 11 s); no-op on CPU
 ```
 
-`model_single.onnx` is the whole model after preprocessing in one graph, for other languages and runtimes: input `img` [1, 3, H, W] (the preprocessed crop, raw 0–255), outputs `boxes` [N, 4], `scores` [N], `ids` [N] and `order` [N] (reading order as indices); on all 7,789 Read v1.3 boxes its text and character boxes equal those of the two-file package (M1).
+`model.onnx` is the whole model after preprocessing in one graph (box decoding, NMS and reading order included), so it can also be used from other languages and runtimes: input `img` [1, 3, H, W] (the preprocessed crop, raw 0–255), outputs `boxes` [N, 4], `scores` [N], `ids` [N] and `order` [N] (reading order as indices).
 
 `read` returns the characters in reading order; boxes are in pixels of the given crop, the score is the character-centre heatmap peak. A combined `!?` glyph is one entry with a two- or three-character string. Inputs may be file paths, PIL images or uint8 RGB arrays. The model files are read from the repository directory; `MangaOcrCharspotNano(model_dir=...)` or `MANGA_OCR_CHARSPOT_NANO_DIR` points elsewhere.
 
@@ -133,7 +133,7 @@ Top to bottom: one convolutional pass gives four stride-8 maps; heatmap cells ab
 - [KuroNet](https://arxiv.org/abs/1910.09433) (Clanuwat et al., ICDAR 2019): reading Japanese text by per-location character detection and classification.
 - Reading order as pairwise successor relations: [Zhang et al.](https://arxiv.org/abs/2409.19672) (EMNLP 2024), [Hakim et al.](https://arxiv.org/abs/2607.01018) (2026); character ordering from coordinates: [Lamb et al.](https://arxiv.org/abs/2106.06786) (2021).
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR): layout of the backbone stem, blocks and downsampling (small PP-OCR recognition backbone). [CPVT](https://arxiv.org/abs/2102.10882): positional convolution before attention. [MobileNetV3](https://arxiv.org/abs/1905.02244): hard-swish and hard-sigmoid squeeze-excite.
-- [Cluster-NMS](https://arxiv.org/abs/2005.03572): parallel NMS in pseudo-labelling and in `model_single.onnx`.
+- [Cluster-NMS](https://arxiv.org/abs/2005.03572): parallel NMS in pseudo-labelling and in `model.onnx`.
 - [Hägele et al.](https://arxiv.org/abs/2405.18392) (NeurIPS 2024): constant learning rate with a 1 − √t cool-down.
 - [AnimeText](https://arxiv.org/abs/2510.07951) and [AnimeText-OCR](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr): real training crops; the real kana glyphs of the synthetic handwriting were also cut from AnimeText images and upscaled with [Real-ESRGAN](https://arxiv.org/abs/2107.10833).
 - [Manga109](http://www.manga109.org/) ([Matsui et al., 2017](https://arxiv.org/abs/1510.04389); [Aizawa et al., 2020](https://arxiv.org/abs/2005.04425)): Manga109-s for evaluation.

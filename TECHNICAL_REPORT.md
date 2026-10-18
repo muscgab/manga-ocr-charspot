@@ -12,7 +12,7 @@ manga-ocr-charspot-nano reads a cropped Japanese manga text box without a text d
 2. **The weak side is non-printed text, horizontal text and long boxes.** EM is 70.29% on non-printed boxes, 65.83% on horizontal boxes and 71.01% on boxes longer than 32 characters. Each character is classified from its own visual feature plus the features and positions of the other characters in the box; there is no language model.
 3. **Weak supervision on real crops with text-only labels is the largest single gain.** The synthetic-only model scores 82.50% on Read v1.3. Training on 1.0M real crops with pseudo character boxes, which the model produces for itself and refines every epoch, raises it to 89.38%. Non-printed EM rises from 53.09% to 70.29%.
 4. **The reading-order head is not the bottleneck.** On printed vertical text 96.26% of boxes are read exactly. Pure ordering errors are rare: 3 of 682 wrong development-set boxes at stage-1 epoch 6. Multi-line horizontal boxes are the exception.
-5. **On CPU the dense network sets the latency.** End to end per crop it takes 8.2 ms on an idle Xeon Gold 6148 (8 threads, ONNX Runtime fp32). On an M1 Pro the dense network is 4.7 of about 6 ms per crop. Decoding, NMS, the tail network and the chain together take about 0.5 ms.
+5. **On CPU the dense network sets the latency.** End to end per crop it takes 8.0 ms on an idle Xeon Gold 6148 (8 threads, ONNX Runtime fp32). On an M1 Pro the dense network is 4.7 of about 6 ms per crop. Decoding, NMS, the tail network and the chain together take about 0.5 ms.
 6. **On GPU the CPU-side work sets the limit.** On an RTX 2080 Ti per-crop latency is 4.7 ms and throughput is at most 648 crops/s. That needs masked batching of crops with different sizes and CUDA graphs. Without them the same model reached 313 crops/s.
 
 ## 1. Task and design idea
@@ -422,10 +422,30 @@ All times are end to end per crop (image already decoded; preprocessing, network
 
 | Device | Threads | p50 |
 |---|---|---|
-| Xeon Gold 6148, idle | 8 | 8.2 ms |
-| M1 Pro, under load (load average 5–12) | 8 | 6.6 ms |
+| Xeon Gold 6148, idle | 8 | 8.0 ms |
+| M1 Pro, under load (load average 5–12; 1.0.0 two-file package) | 8 | 6.6 ms |
 
-**Breakdown on the M1 Pro** (load average 4–6, ONNX Runtime 1.23.2):
+The package runs one ONNX file, `model.onnx` (6.9 MB), with one session. Box decoding, NMS, furigana removal, the tail and the chain are inside the graph:
+
+- NMS runs as a fixed-point loop (the Cluster-NMS form, equal to greedy NMS).
+- The stable sort by score is a TopK (ties broken by lower index).
+- Box centres are computed in float64, as numpy promotes them.
+
+**Single file vs the 1.0.0 two-file split.** Version 1.0.0 shipped the dense network and the tail as two files and ran decoding and NMS in numpy between them; the tail session used 1 thread, because with 8 threads its pool competed with the dense session's pool (dense network 4.5 → 7.4 ms).
+
+- **Agreement**: on the M1, text and character boxes are the same on all 7,789 boxes. On the Xeon, text is the same on all 7,789, and 10 character boxes differ by 0.1 px (rounding).
+- **Speed** on the idle Xeon, one process per run, alternating two-file / single / two-file / single:
+
+| Run | p50 | p90 | p99 | p50, > 64 characters (8 boxes) |
+|---|---|---|---|---|
+| Two-file, run 1 | 7.79 ms | 9.89 ms | 15.96 ms | 15.21 ms |
+| Single file, run 1 | 8.06 ms | 10.19 ms | 15.99 ms | 14.96 ms |
+| Two-file, run 2 | 8.16 ms | 10.31 ms | 16.80 ms | 17.21 ms |
+| Single file, run 2 | 7.91 ms | 10.04 ms | 15.86 ms | 14.88 ms |
+
+  The difference between the two forms (p50 7.98 vs 7.99 ms, mean of two runs) is smaller than the run-to-run spread (0.2–0.4 ms). Running both sessions in one process and alternating crops is not a fair test: their spinning thread pools compete, and that run showed 8.70 ms for the single file against 7.88 ms.
+
+**Breakdown on the M1 Pro** (1.0.0 two-file split, load average 4–6, ONNX Runtime 1.23.2):
 
 | Step | Time |
 |---|---|
@@ -436,19 +456,10 @@ All times are end to end per crop (image already decoded; preprocessing, network
 | Chain | 0.03 ms |
 
 - **Dense network vs threads**: 13.5 ms with 1 thread, 5.6 ms with 4, 4.5 ms with 8.
-- **Why the package uses two ONNX files.**
-  - Box decoding and NMS between the dense network and the tail are data-dependent and cheap in numpy.
-  - The tail session runs with 1 thread. With 8 threads its pool competes with the dense session's pool, and the dense network slowed from 4.5 to 7.4 ms.
-- **Start-up**:
-  - Loading both sessions takes about 70 ms, and the first call 15.6 ms.
-  - There is no per-shape warm-up: first calls on 38 new input sizes had a p50 of 5.85 ms, against 6.08 ms for repeated sizes.
-- **ONNX Runtime thread spinning**: left on. Turning it off raised the dense network from 4.50 to 6.72 ms and saved only 0.04 CPU-seconds per second when idle.
-- **Single-file ONNX** (`model_single.onnx`, 6.9 MB): decoding, NMS and the chain are inside the graph.
-  - NMS runs as a fixed-point loop (the Cluster-NMS form, equal to greedy NMS).
-  - The stable sort by score is a TopK (ties broken by lower index).
-  - Box centres are computed in float64, as numpy promotes them.
-  - **Agreement with the two-file package**: on the M1, text and character boxes match it on all 7,789 boxes. On the Xeon, text matches on all 7,789, and 10 character boxes differ by 0.1 px (rounding).
-  - **Speed**: 8.07 ms vs 8.27 ms for the two-file package, back to back on the idle Xeon.
+- **Start-up** (single file, idle Xeon, 3 runs):
+  - Loading the session takes 236–239 ms, and the first call 16–27 ms.
+  - There is no per-shape warm-up: over the first 400 Read v1.3 crops, the 37 crops with a new input size had a p50 of 7.80–8.01 ms, against 7.77–8.00 ms for repeated sizes.
+- **ONNX Runtime thread spinning**: left on. Turning it off raised the dense network from 4.50 to 6.72 ms and saved only 0.04 CPU-seconds per second when idle (1.0.0 dense file).
 - **Reference**: an internal 8.5M CNN with a non-autoregressive text decoder (not released) took 16.97 ms on the same Xeon (8 threads, first 100 Read v1.3 boxes), against 7.06 ms for this model at the end of stage 1.
 
 ### 6.2 NVIDIA GPU (RTX 2080 Ti)

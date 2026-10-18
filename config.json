@@ -1,14 +1,10 @@
 {
  "model": "manga-ocr-charspot-nano",
- "version": "1.0.0",
+ "version": "1.1.0",
  "params": 1703263,
  "n_cls": 6818,
  "vocab": "vocab.json",
- "onnx": {
-  "dense": "model_dense.onnx",
-  "tail": "model_tail.onnx",
-  "single": "model_single.onnx"
- },
+ "onnx": "model.onnx",
  "input": {
   "cell": 16,
   "budget_cells": 196,

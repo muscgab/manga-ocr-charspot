@@ -46,11 +46,11 @@ Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用
 
 | 模型 | 格式 | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.6 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.6 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* 在有负载的笔记本上测得（load average 5–12）；Xeon 测时空闲。
+\* 用 1.0.0 双文件包在有负载的笔记本上测得（load average 5–12）；Xeon 测时空闲。在 Xeon 上，单文件与 1.0.0 双文件包速度相同（见技术报告 §6.1）。
 
 **NVIDIA GPU**（RTX 2080 Ti，Read 的测速口径：单张 = batch 1；按页 = 每次一页的框，取中位数；最大吞吐 = 最佳 batch，CPU 预处理放在子进程）：
 
@@ -64,7 +64,7 @@ Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用
 
 manga-ocr-charspot-nano 以外的数字取自 [Read 排行榜](https://github.com/muscgab/JMangaBench_Read) 和 manga-ocr-nar-small 的模型卡（同一机器、同一口径）。manga-ocr-charspot-nano 在 `warmup()` 之后测量（启动时一次，11 s，为开发集用到的 17 种输入画布捕获 CUDA graph；之后占用显存 3.1 GB）。CUDA 后端把一次调用里的裁图补零到少数几种画布尺寸，每种画布作为一个带掩码的批来跑；网络只有 1.7M 参数，GPU 大部分时间空闲，瓶颈是每次调用里的 CPU 工作（框解码、NMS、排序）。
 
-空闲一段时间后处理器会降频，下一框会变慢：空闲的 Xeon（调频策略 `powersave`）上，空闲 1–20 s 后为 15 ms，连续处理时 8.2 ms；RTX 2080 Ti 上，空闲 1–5 s 后 8.9 ms、20 s 后 24 ms，连续处理时 4.2 ms。锁定频率可以避免。
+空闲一段时间后处理器会降频，下一框会变慢：空闲的 Xeon（调频策略 `powersave`）上，空闲 1–20 s 后为 15 ms，连续处理时约 8 ms；RTX 2080 Ti 上，空闲 1–5 s 后 8.9 ms、20 s 后 24 ms，连续处理时 4.2 ms。锁定频率可以避免。
 
 ## 用法
 
@@ -86,7 +86,7 @@ ocr.read("crop.png")                    # -> {"text": ..., "chars": [{"char": "�
 ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA graph（约 11 s）；CPU 上什么也不做
 ```
 
-`model_single.onnx` 把预处理之后的整个模型放在一张图里，供其他语言和运行时使用：输入 `img` [1, 3, H, W]（预处理后的裁图，0–255 原始像素值），输出 `boxes` [N, 4]、`scores` [N]、`ids` [N] 和 `order` [N]（以下标表示的阅读顺序）；在 Read v1.3 全部 7,789 框上，文字和逐字框都与双文件包一致（M1）。
+`model.onnx` 把预处理之后的整个模型（含框解码、NMS 和阅读顺序）放在一张图里，也可以在其他语言和运行时里直接使用：输入 `img` [1, 3, H, W]（预处理后的裁图，0–255 原始像素值），输出 `boxes` [N, 4]、`scores` [N]、`ids` [N] 和 `order` [N]（以下标表示的阅读顺序）。
 
 `read` 按阅读顺序返回各字；框以输入裁图的像素为单位，分数是字中心热图的峰值。縦中横的 `!?` 组合是一个条目，内容为两到三个字符。输入可以是文件路径、PIL 图像或 uint8 RGB 数组。模型文件默认从仓库目录读取；也可以用 `MangaOcrCharspotNano(model_dir=...)` 或环境变量 `MANGA_OCR_CHARSPOT_NANO_DIR` 指定。
 
@@ -133,7 +133,7 @@ ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA gra
 - [KuroNet](https://arxiv.org/abs/1910.09433)（Clanuwat 等，ICDAR 2019）：逐位置检测并分类字来读日文。
 - 把阅读顺序建模为成对的后继关系：[Zhang 等](https://arxiv.org/abs/2409.19672)（EMNLP 2024）、[Hakim 等](https://arxiv.org/abs/2607.01018)（2026）；根据坐标给字排序：[Lamb 等](https://arxiv.org/abs/2106.06786)（2021）。
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)：骨干的 stem、块和下采样结构（小型 PP-OCR 识别骨干）。[CPVT](https://arxiv.org/abs/2102.10882)：注意力前的位置卷积。[MobileNetV3](https://arxiv.org/abs/1905.02244)：hard-swish 与 hard-sigmoid 的 squeeze-excite。
-- [Cluster-NMS](https://arxiv.org/abs/2005.03572)：伪标注和 `model_single.onnx` 中的并行 NMS。
+- [Cluster-NMS](https://arxiv.org/abs/2005.03572)：伪标注和 `model.onnx` 中的并行 NMS。
 - [Hägele 等](https://arxiv.org/abs/2405.18392)（NeurIPS 2024）：恒定学习率加 1 − √t 冷却。
 - [AnimeText](https://arxiv.org/abs/2510.07951) 与 [AnimeText-OCR](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr)：真实训练裁图；合成手写用到的真实假名字形也切自 AnimeText 图片，并用 [Real-ESRGAN](https://arxiv.org/abs/2107.10833) 放大。
 - [Manga109](http://www.manga109.org/)（[Matsui 等，2017](https://arxiv.org/abs/1510.04389)；[Aizawa 等，2020](https://arxiv.org/abs/2005.04425)）：Manga109-s 用于评测。
