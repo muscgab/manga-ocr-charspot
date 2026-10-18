@@ -1,0 +1,28 @@
+{
+ "model": "manga-ocr-charspot-nano",
+ "version": "1.0.0",
+ "params": 1703263,
+ "n_cls": 6818,
+ "vocab": "vocab.json",
+ "onnx": {
+  "dense": "model_dense.onnx",
+  "tail": "model_tail.onnx",
+  "single": "model_single.onnx"
+ },
+ "input": {
+  "cell": 16,
+  "budget_cells": 196,
+  "resize": "PIL bicubic, aspect kept",
+  "pad": "median border colour",
+  "pixel_range": "raw 0-255 RGB"
+ },
+ "decode": {
+  "heat_threshold": 0.3,
+  "nms_iou": 0.2,
+  "nms_centre_inside": 0.5,
+  "ruby_threshold": 0.5,
+  "stride": 8
+ },
+ "weights": "model.safetensors",
+ "n_out": 6830
+}

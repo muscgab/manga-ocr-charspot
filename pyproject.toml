@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "manga-ocr-charspot-nano"
+version = "1.0.0"
+description = "Japanese manga text-box OCR by character detection and learned reading order (1.7M parameters, no decoder)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Code: Apache-2.0; model weights: CC BY-NC-SA 4.0"}
+dependencies = ["numpy", "Pillow"]
+
+[project.optional-dependencies]
+cpu = ["onnxruntime>=1.17"]
+cuda = ["torch>=2.1", "safetensors"]
+
+[project.scripts]
+manga-ocr-charspot-nano = "manga_ocr_charspot_nano.cli:main"
+
+[tool.setuptools]
+packages = ["manga_ocr_charspot_nano", "manga_ocr_charspot_nano.backends"]
