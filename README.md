@@ -46,11 +46,11 @@ End to end per crop (image already decoded; preprocessing, network, decoding and
 
 | Model | Format | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.6 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.3 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* measured with the 1.0.0 two-file package on a laptop under load (load average 5–12); the Xeon was idle. On the Xeon the single file and the 1.0.0 two-file package run at the same speed (technical report §6.1).
+\* measured on a laptop under load (load average 5–15); the Xeon was idle.
 
 **NVIDIA GPU** (RTX 2080 Ti, Read's speed protocol: per image = batch 1; per page = one page's boxes per call, p50; max img/s = best batch with CPU preprocessing in worker processes):
 

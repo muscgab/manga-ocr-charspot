@@ -46,11 +46,11 @@ Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用
 
 | 模型 | 格式 | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.6 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.3 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* 用 1.0.0 双文件包在有负载的笔记本上测得（load average 5–12）；Xeon 测时空闲。在 Xeon 上，单文件与 1.0.0 双文件包速度相同（见技术报告 §6.1）。
+\* 在有负载的笔记本上测得（load average 5–15）；Xeon 测时空闲。
 
 **NVIDIA GPU**（RTX 2080 Ti，Read 的测速口径：单张 = batch 1；按页 = 每次一页的框，取中位数；最大吞吐 = 最佳 batch，CPU 预处理放在子进程）：
 

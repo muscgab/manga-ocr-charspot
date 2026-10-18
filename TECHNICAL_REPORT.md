@@ -423,7 +423,7 @@ All times are end to end per crop (image already decoded; preprocessing, network
 | Device | Threads | p50 |
 |---|---|---|
 | Xeon Gold 6148, idle | 8 | 8.0 ms |
-| M1 Pro, under load (load average 5–12; 1.0.0 two-file package) | 8 | 6.6 ms |
+| M1 Pro, under load (load average 5–15) | 8 | 6.3 ms |
 
 The package runs one ONNX file, `model.onnx` (6.9 MB), with one session. Box decoding, NMS, furigana removal, the tail and the chain are inside the graph:
 
@@ -443,7 +443,17 @@ The package runs one ONNX file, `model.onnx` (6.9 MB), with one session. Box dec
 | Two-file, run 2 | 8.16 ms | 10.31 ms | 16.80 ms | 17.21 ms |
 | Single file, run 2 | 7.91 ms | 10.04 ms | 15.86 ms | 14.88 ms |
 
-  The difference between the two forms (p50 7.98 vs 7.99 ms, mean of two runs) is smaller than the run-to-run spread (0.2–0.4 ms). Running both sessions in one process and alternating crops is not a fair test: their spinning thread pools compete, and that run showed 8.70 ms for the single file against 7.88 ms.
+  The difference between the two forms (p50 7.98 vs 7.99 ms, mean of two runs) is smaller than the run-to-run spread (0.2–0.4 ms).
+- **Speed** on the M1 Pro under load (load average 5–15), same protocol:
+
+| Run | p50 | p90 | p99 | p50, > 64 characters (8 boxes) |
+|---|---|---|---|---|
+| Two-file, run 1 | 6.87 ms | 10.05 ms | 19.13 ms | 12.96 ms |
+| Single file, run 1 | 6.33 ms | 8.78 ms | 14.41 ms | 9.92 ms |
+| Two-file, run 2 | 6.84 ms | 10.16 ms | 18.66 ms | 12.18 ms |
+| Single file, run 2 | 6.26 ms | 8.39 ms | 12.54 ms | 9.38 ms |
+
+  Here the single file is about 8% faster at p50 and has a shorter tail; the cause was not isolated. Running both sessions in one process and alternating crops is not a fair test: their spinning thread pools compete, and that run showed 8.70 ms for the single file against 7.88 ms.
 
 **Breakdown on the M1 Pro** (1.0.0 two-file split, load average 4–6, ONNX Runtime 1.23.2):
 
