@@ -1,6 +1,6 @@
 # manga-ocr-charspot-nano
 
-English | [中文](README_zh.md) · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano)
+English | [中文](README_zh.md) · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano) · [Technical report](TECHNICAL_REPORT.md)
 
 OCR for Japanese manga text boxes with 1.7M parameters. The model detects every character in a cropped text box, classifies it, and puts the characters in reading order with a small learned ordering head. There is no text decoder. Besides the text, it returns a box and a score for each character.
 
@@ -125,6 +125,19 @@ Top to bottom: one convolutional pass gives four stride-8 maps; heatmap cells ab
 - Read v1.2 (3,142 boxes, part of v1.3) was the development set: checkpoint choice, NMS threshold and error analysis. The 4,660 new boxes of v1.3 were not used for any decision.
 - Manga109-s was not used for training, model selection or tuning.
 - The scores are the outputs of the released ONNX package (CPU, fp32), identical to the PyTorch fp32 outputs on all 7,789 Read boxes. The CUDA backend runs the dense network in fp16: on Read v1.3 its per-image output differs from the CPU output on 5 of 7,789 boxes (EM 89.37 vs 89.38), its per-page batched output on 7 boxes (EM 89.38, all 7 wrong either way).
+
+## Acknowledgements
+
+- [PageNet](https://arxiv.org/abs/2207.14807) (Peng et al., IJCV 2022): character detection on a grid, and weak supervision of real crops that have only text labels (pseudo character boxes matched to the label, score-weighted update across epochs).
+- [CenterNet](https://arxiv.org/abs/1904.07850) (Zhou et al., 2019): character-centre heatmap with Gaussian targets and the penalty-reduced focal loss, box regression at the peak.
+- [KuroNet](https://arxiv.org/abs/1910.09433) (Clanuwat et al., ICDAR 2019): reading Japanese text by per-location character detection and classification.
+- Reading order as pairwise successor relations: [Zhang et al.](https://arxiv.org/abs/2409.19672) (EMNLP 2024), [Hakim et al.](https://arxiv.org/abs/2607.01018) (2026); character ordering from coordinates: [Lamb et al.](https://arxiv.org/abs/2106.06786) (2021).
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR): layout of the backbone stem, blocks and downsampling (small PP-OCR recognition backbone). [CPVT](https://arxiv.org/abs/2102.10882): positional convolution before attention. [MobileNetV3](https://arxiv.org/abs/1905.02244): hard-swish and hard-sigmoid squeeze-excite.
+- [Cluster-NMS](https://arxiv.org/abs/2005.03572): parallel NMS in pseudo-labelling and in `model_single.onnx`.
+- [Hägele et al.](https://arxiv.org/abs/2405.18392) (NeurIPS 2024): constant learning rate with a 1 − √t cool-down.
+- [AnimeText](https://arxiv.org/abs/2510.07951) and [AnimeText-OCR](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr): real training crops; the real kana glyphs of the synthetic handwriting were also cut from AnimeText images and upscaled with [Real-ESRGAN](https://arxiv.org/abs/2107.10833).
+- [Manga109](http://www.manga109.org/) ([Matsui et al., 2017](https://arxiv.org/abs/1510.04389); [Aizawa et al., 2020](https://arxiv.org/abs/2005.04425)): Manga109-s for evaluation.
+- mangaOCR, Hayai, baberuOCR and PaddleOCR-VL-For-Manga: comparison models from the Read leaderboard.
 
 ## License
 

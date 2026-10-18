@@ -1,6 +1,6 @@
 # manga-ocr-charspot-nano
 
-[English](README.md) | 中文 · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano)
+[English](README.md) | 中文 · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano) · [技术报告](TECHNICAL_REPORT_zh.md)
 
 日文漫画文本框 OCR，1.7M 参数。模型在裁好的文本框里检测每一个字、逐字分类，再用一个小的阅读顺序模块把字排成文本。没有文本解码器。除了文字，还输出每个字的框和分数。
 
@@ -125,6 +125,19 @@ ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA gra
 - Read v1.2（3,142 框，属于 v1.3 的一部分）是开发集：用于选检查点、定 NMS 阈值和错误分析。v1.3 新增的 4,660 框没有参与任何决定。
 - Manga109-s 没有用于训练、选模型或调参。
 - 以上成绩来自发布的 ONNX 包（CPU，fp32），与 PyTorch fp32 输出在 Read 全部 7,789 框上逐框一致。CUDA 后端的稠密网络用 fp16：在 Read v1.3 上，单张输出有 5 框与 CPU 不同（EM 89.37 对 89.38），按页合批输出有 7 框不同（EM 89.38，这 7 框两边都读错）。
+
+## 致谢
+
+- [PageNet](https://arxiv.org/abs/2207.14807)（Peng 等，IJCV 2022）：在网格上检测字；对只有文字标签的真实裁图做弱监督（伪字框与标签匹配，跨轮按分数加权更新）。
+- [CenterNet](https://arxiv.org/abs/1904.07850)（Zhou 等，2019）：字中心热图的高斯目标和减罚 focal loss，在峰值处回归框。
+- [KuroNet](https://arxiv.org/abs/1910.09433)（Clanuwat 等，ICDAR 2019）：逐位置检测并分类字来读日文。
+- 把阅读顺序建模为成对的后继关系：[Zhang 等](https://arxiv.org/abs/2409.19672)（EMNLP 2024）、[Hakim 等](https://arxiv.org/abs/2607.01018)（2026）；根据坐标给字排序：[Lamb 等](https://arxiv.org/abs/2106.06786)（2021）。
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)：骨干的 stem、块和下采样结构（小型 PP-OCR 识别骨干）。[CPVT](https://arxiv.org/abs/2102.10882)：注意力前的位置卷积。[MobileNetV3](https://arxiv.org/abs/1905.02244)：hard-swish 与 hard-sigmoid 的 squeeze-excite。
+- [Cluster-NMS](https://arxiv.org/abs/2005.03572)：伪标注和 `model_single.onnx` 中的并行 NMS。
+- [Hägele 等](https://arxiv.org/abs/2405.18392)（NeurIPS 2024）：恒定学习率加 1 − √t 冷却。
+- [AnimeText](https://arxiv.org/abs/2510.07951) 与 [AnimeText-OCR](https://huggingface.co/datasets/JustANormalTinkerer/animetext-ocr)：真实训练裁图；合成手写用到的真实假名字形也切自 AnimeText 图片，并用 [Real-ESRGAN](https://arxiv.org/abs/2107.10833) 放大。
+- [Manga109](http://www.manga109.org/)（[Matsui 等，2017](https://arxiv.org/abs/1510.04389)；[Aizawa 等，2020](https://arxiv.org/abs/2005.04425)）：Manga109-s 用于评测。
+- mangaOCR、Hayai、baberuOCR、PaddleOCR-VL-For-Manga：来自 Read 排行榜的对比模型。
 
 ## 许可
 
