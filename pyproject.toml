@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manga-ocr-charspot-nano"
-version = "1.1.0"
+version = "1.1.1"
 description = "Japanese manga text-box OCR by character detection and learned reading order (1.7M parameters, no decoder)"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -46,11 +46,11 @@ End to end per crop (image already decoded; preprocessing, network, decoding and
 
 | Model | Format | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.3 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.2 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* measured on a laptop under load (load average 5–15); the Xeon was idle.
+\* measured on a laptop under load (load average 4–13); the Xeon was idle.
 
 **NVIDIA GPU** (RTX 2080 Ti, Read's speed protocol: per image = batch 1; per page = one page's boxes per call, p50; max img/s = best batch with CPU preprocessing in worker processes):
 
@@ -86,7 +86,7 @@ ocr.read("crop.png")                    # -> {"text": ..., "chars": [{"char": "�
 ocr.warmup()                            # CUDA backend: capture the CUDA graphs once (about 11 s); no-op on CPU
 ```
 
-`model.onnx` is the whole model after preprocessing in one graph (box decoding, NMS and reading order included), so it can also be used from other languages and runtimes: input `img` [1, 3, H, W] (the preprocessed crop, raw 0–255), outputs `boxes` [N, 4], `scores` [N], `ids` [N] and `order` [N] (reading order as indices).
+`model.onnx` is the whole model after preprocessing in one graph (box decoding, NMS and reading order included), so it can also be used from other languages and runtimes: input `img` [1, 3, H, W] (the preprocessed crop, raw 0–255), outputs `boxes` [N, 4], `scores` [N], `ids` [N] and `order` [N] (reading order as indices); a crop without characters gives N = 0.
 
 `read` returns the characters in reading order; boxes are in pixels of the given crop, the score is the character-centre heatmap peak. A combined `!?` glyph is one entry with a two- or three-character string. Inputs may be file paths, PIL images or uint8 RGB arrays. The model files are read from the repository directory; `MangaOcrCharspotNano(model_dir=...)` or `MANGA_OCR_CHARSPOT_NANO_DIR` points elsewhere.
 

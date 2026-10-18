@@ -12,7 +12,7 @@ manga-ocr-charspot-nano reads a cropped Japanese manga text box without a text d
 2. **The weak side is non-printed text, horizontal text and long boxes.** EM is 70.29% on non-printed boxes, 65.83% on horizontal boxes and 71.01% on boxes longer than 32 characters. Each character is classified from its own visual feature plus the features and positions of the other characters in the box; there is no language model.
 3. **Weak supervision on real crops with text-only labels is the largest single gain.** The synthetic-only model scores 82.50% on Read v1.3. Training on 1.0M real crops with pseudo character boxes, which the model produces for itself and refines every epoch, raises it to 89.38%. Non-printed EM rises from 53.09% to 70.29%.
 4. **The reading-order head is not the bottleneck.** On printed vertical text 96.26% of boxes are read exactly. Pure ordering errors are rare: 3 of 682 wrong development-set boxes at stage-1 epoch 6. Multi-line horizontal boxes are the exception.
-5. **On CPU the dense network sets the latency.** End to end per crop it takes 8.0 ms on an idle Xeon Gold 6148 (8 threads, ONNX Runtime fp32). On an M1 Pro the dense network is 4.7 of about 6 ms per crop. Decoding, NMS, the tail network and the chain together take about 0.5 ms.
+5. **On CPU the dense network sets the latency.** End to end per crop it takes 8.2 ms on an idle Xeon Gold 6148 (8 threads, ONNX Runtime fp32). On an M1 Pro the dense network is 4.7 of about 6 ms per crop. Decoding, NMS, the tail network and the chain together take about 0.5 ms.
 6. **On GPU the CPU-side work sets the limit.** On an RTX 2080 Ti per-crop latency is 4.7 ms and throughput is at most 648 crops/s. That needs masked batching of crops with different sizes and CUDA graphs. Without them the same model reached 313 crops/s.
 
 ## 1. Task and design idea
@@ -422,16 +422,17 @@ All times are end to end per crop (image already decoded; preprocessing, network
 
 | Device | Threads | p50 |
 |---|---|---|
-| Xeon Gold 6148, idle | 8 | 8.0 ms |
-| M1 Pro, under load (load average 5–15) | 8 | 6.3 ms |
+| Xeon Gold 6148, idle | 8 | 8.2 ms |
+| M1 Pro, under load (load average 4–13) | 8 | 6.2 ms |
 
 The package runs one ONNX file, `model.onnx` (6.9 MB), with one session. Box decoding, NMS, furigana removal, the tail and the chain are inside the graph:
 
 - NMS runs as a fixed-point loop (the Cluster-NMS form, equal to greedy NMS).
 - The stable sort by score is a TopK (ties broken by lower index).
 - Box centres are computed in float64, as numpy promotes them.
+- The tail and the chain run inside an If on N > 0, so a crop without characters returns empty outputs (added in 1.1.1; in 1.1.0 an empty keep set failed a Reshape in the tail). Outputs for N > 0 are unchanged on all 7,789 Read v1.3 boxes. Cost, alternating separate processes: p50 8.21 / 8.14 ms against 8.13 / 7.96 ms for 1.1.0 on the idle Xeon; 6.26 / 6.13 against 6.23 / 6.92 ms on the M1 under load.
 
-**Single file vs the 1.0.0 two-file split.** Version 1.0.0 shipped the dense network and the tail as two files and ran decoding and NMS in numpy between them; the tail session used 1 thread, because with 8 threads its pool competed with the dense session's pool (dense network 4.5 → 7.4 ms).
+**Single file (1.1.0) vs the 1.0.0 two-file split.** Version 1.0.0 shipped the dense network and the tail as two files and ran decoding and NMS in numpy between them; the tail session used 1 thread, because with 8 threads its pool competed with the dense session's pool (dense network 4.5 → 7.4 ms).
 
 - **Agreement**: on the M1, text and character boxes are the same on all 7,789 boxes. On the Xeon, text is the same on all 7,789, and 10 character boxes differ by 0.1 px (rounding).
 - **Speed** on the idle Xeon, one process per run, alternating two-file / single / two-file / single:

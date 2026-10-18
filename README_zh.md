@@ -46,11 +46,11 @@ Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用
 
 | 模型 | 格式 | Xeon Gold 6148 | M1 Pro |
 |---|---|---|---|
-| **manga-ocr-charspot-nano** | ONNX fp32 | 8.0 ms | 6.3 ms * |
+| **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.2 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
 | manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
 
-\* 在有负载的笔记本上测得（load average 5–15）；Xeon 测时空闲。
+\* 在有负载的笔记本上测得（load average 4–13）；Xeon 测时空闲。
 
 **NVIDIA GPU**（RTX 2080 Ti，Read 的测速口径：单张 = batch 1；按页 = 每次一页的框，取中位数；最大吞吐 = 最佳 batch，CPU 预处理放在子进程）：
 
@@ -86,7 +86,7 @@ ocr.read("crop.png")                    # -> {"text": ..., "chars": [{"char": "�
 ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA graph（约 11 s）；CPU 上什么也不做
 ```
 
-`model.onnx` 把预处理之后的整个模型（含框解码、NMS 和阅读顺序）放在一张图里，也可以在其他语言和运行时里直接使用：输入 `img` [1, 3, H, W]（预处理后的裁图，0–255 原始像素值），输出 `boxes` [N, 4]、`scores` [N]、`ids` [N] 和 `order` [N]（以下标表示的阅读顺序）。
+`model.onnx` 把预处理之后的整个模型（含框解码、NMS 和阅读顺序）放在一张图里，也可以在其他语言和运行时里直接使用：输入 `img` [1, 3, H, W]（预处理后的裁图，0–255 原始像素值），输出 `boxes` [N, 4]、`scores` [N]、`ids` [N] 和 `order` [N]（以下标表示的阅读顺序）；没有字的裁图得到 N = 0。
 
 `read` 按阅读顺序返回各字；框以输入裁图的像素为单位，分数是字中心热图的峰值。縦中横的 `!?` 组合是一个条目，内容为两到三个字符。输入可以是文件路径、PIL 图像或 uint8 RGB 数组。模型文件默认从仓库目录读取；也可以用 `MangaOcrCharspotNano(model_dir=...)` 或环境变量 `MANGA_OCR_CHARSPOT_NANO_DIR` 指定。
 
