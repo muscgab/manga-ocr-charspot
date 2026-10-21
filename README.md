@@ -50,7 +50,7 @@ End to end per crop (image already decoded; preprocessing, network, decoding and
 |---|---|---|---|
 | **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.2 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
-| manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
+| manga-ocr-nar-small | ONNX fp32 | 75.4 ms | — |
 
 \* measured on a laptop under load (load average 4–13); the Xeon was idle.
 

@@ -50,7 +50,7 @@ Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用
 |---|---|---|---|
 | **manga-ocr-charspot-nano** | ONNX fp32 | 8.2 ms | 6.2 ms * |
 | manga-ocr-nar-small-distil | ONNX int8 | 37.3 ms | 21.0 ms |
-| manga-ocr-nar-small | ONNX fp32 | 58.2 ms | — |
+| manga-ocr-nar-small | ONNX fp32 | 75.4 ms | — |
 
 \* 在有负载的笔记本上测得（load average 4–13）；Xeon 测时空闲。
 
