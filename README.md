@@ -2,7 +2,7 @@
 
 English | [中文](README_zh.md) · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano) · [Technical report](TECHNICAL_REPORT.md)
 
-OCR for Japanese manga text boxes with 1.7M parameters. The model detects every character in a cropped text box, classifies it, and puts the characters in reading order with a small learned ordering head. There is no text decoder. Besides the text, it returns a box and a score for each character.
+OCR for Japanese manga text boxes with 1.7M parameters. The model detects every character in a cropped text box, classifies it, and puts the characters in reading order with a small learned ordering head. There is no text decoder. Besides the text, it returns a box and a score for each character. A larger sibling with the same design, [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small) (11M parameters), is more accurate (Read v1.3 EM 92.37 vs 89.40) and about 2.8× slower on the CPU.
 
 <img src="samples/char_boxes.png" width="100%">
 
@@ -12,29 +12,31 @@ Model output on three Read v1.3 boxes: character boxes (red) and reading order (
 
 ### JMangaBench_Read v1.3 (same domain, not used for training or model selection)
 
-[JMangaBench_Read v1.3.1](https://github.com/muscgab/JMangaBench_Read), 7,789 boxes, official scorer (RIN v1.1). "New" = the 4,660 boxes added in v1.3; Read v1.2 was the development set (see [Evaluation notes](#evaluation-notes)).
+[JMangaBench_Read v1.3.2](https://github.com/muscgab/JMangaBench_Read), 7,789 boxes, official scorer (RIN v1.2). "New" = the 4,660 boxes added in v1.3; Read v1.2 was the development set (see [Evaluation notes](#evaluation-notes)).
 
 | Model | Params | Composite ↑ | CER % ↓ | EM % ↑ | EM new % ↑ | EM printed % ↑ | EM non-printed % ↑ |
 |---|---|---|---|---|---|---|---|
-| **manga-ocr-charspot-nano** | **1.7M** | 95.74 | 2.14 | 89.38 | 89.55 | **95.59** | 70.29 |
+| **manga-ocr-charspot-nano** | **1.7M** | 95.75 | 2.14 | 89.40 | 89.57 | 95.59 | 70.35 |
+| [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small) | 11M | 97.17 | 1.37 | 92.37 | 92.62 | 96.49 | 79.71 |
 | manga-ocr-nar-small | 54M | 97.29 | 1.71 | 91.36 | 91.65 | 94.74 | 80.96 |
 | manga-ocr-nar-small-distil | 30M | 96.40 | 2.29 | 89.09 | 88.95 | 93.21 | 76.41 |
-| Hayai v2.5 Nova p384 | 157M | 96.64 | 2.38 | 88.18 | 88.41 | 91.93 | 76.62 |
-| PaddleOCR-VL-For-Manga | 959M | 95.04 | 1.99 | 87.89 | 87.92 | 95.17 | 65.53 |
+| Hayai v2.5 Nova p384 | 157M | 96.64 | 2.37 | 88.20 | 88.45 | 91.95 | 76.67 |
+| PaddleOCR-VL-For-Manga | 959M | 95.04 | 1.99 | 87.91 | 87.94 | 95.17 | 65.59 |
 | mangaOCR | 111M | 90.27 | 4.81 | 78.51 | 78.48 | 88.34 | 48.27 |
 
 EM is the share of boxes whose normalized prediction equals the normalized label exactly; CER is the total edit distance divided by the total number of label characters. Composite is Read's ranking metric (1 − normalized edit distance, printed and non-printed weighted equally); the weak non-printed side puts this model below Nova on it while its EM is higher.
 
 ### Manga109-s (different domain, not used for training)
 
-All 123,014 text annotations of Manga109-s (scanned commercial manga, 87 volumes), cropped with the dataset's own boxes; labels and predictions normalized with RIN v1.1; EM and CER as above. Models trained on Manga109-s (Hayai, mangaOCR) are not listed. baberuOCR v1.1 (training data not published) uses the generation settings of the Read leaderboard; Preview is [manga-ocr-nar-preview](https://huggingface.co/muscgab/manga-ocr-nar-preview).
+All 123,014 text annotations of Manga109-s (scanned commercial manga, 87 volumes), cropped with the dataset's own boxes; labels and predictions normalized with RIN v1.2; EM and CER as above. Models trained on Manga109-s (Hayai, mangaOCR) are not listed. baberuOCR v1.1 (training data not published) uses the generation settings of the Read leaderboard; Preview is [manga-ocr-nar-preview](https://huggingface.co/muscgab/manga-ocr-nar-preview).
 
 | Model | Params | EM % ↑ | CER % ↓ | EM 1–4 chars | 5–16 | 17–32 | > 32 |
 |---|---|---|---|---|---|---|---|
 | **manga-ocr-charspot-nano** | **1.7M** | 89.10 | 1.98 | 94.27 | 90.37 | 84.46 | 60.21 |
+| [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small) | 11M | 91.13 | 1.44 | 93.93 | 92.03 | 88.18 | 75.11 |
 | manga-ocr-nar-small | 54M | 92.08 | 1.39 | 95.92 | 92.23 | 90.11 | 74.39 |
 | baberuOCR v1.1 | 113M | 86.68 | 2.51 | 94.73 | 87.92 | 79.75 | 54.40 |
-| Preview | 196M | 86.51 | 2.46 | 91.74 | 87.30 | 83.22 | 55.59 |
+| Preview | 196M | 86.52 | 2.46 | 91.74 | 87.30 | 83.22 | 55.59 |
 
 Boxes per length bucket: 26,336 / 65,916 / 27,580 / 3,182.
 
@@ -114,7 +116,7 @@ Top to bottom: one convolutional pass gives four stride-8 maps; heatmap cells ab
 
 ## Limitations
 
-- **Non-printed text**: EM 70.29 on Read v1.3 vs 80.96 for manga-ocr-nar-small. Each character is classified from its own features, without language context; look-alike characters in rough handwriting are the main error.
+- **Non-printed text**: EM 70.35 on Read v1.3 vs 80.96 for manga-ocr-nar-small. Each character is classified from its own features, without language context; look-alike characters in rough handwriting are the main error.
 - **Horizontal text**: EM 65.83 on the 439 horizontal Read boxes vs 84.51 for manga-ocr-nar-small.
 - **Long boxes**: more than 32 characters, 60.21 vs 74.39 for manga-ocr-nar-small on Manga109-s (3,182 boxes); on Read (169 boxes) 71.01 vs 73.96.
 - Real-data supervision only covers characters the model already reads correctly on that crop; characters it never reads correctly are learned from synthetic data only.
@@ -124,7 +126,7 @@ Top to bottom: one convolutional pass gives four stride-8 maps; heatmap cells ab
 
 - Read v1.2 (3,142 boxes, part of v1.3) was the development set: checkpoint choice, NMS threshold and error analysis. The 4,660 new boxes of v1.3 were not used for any decision.
 - Manga109-s was not used for training, model selection or tuning.
-- The scores are the outputs of the released ONNX package (CPU, fp32), identical to the PyTorch fp32 outputs on all 7,789 Read boxes. The CUDA backend runs the dense network in fp16: on Read v1.3 its per-image output differs from the CPU output on 5 of 7,789 boxes (EM 89.37 vs 89.38), its per-page batched output on 7 boxes (EM 89.38, all 7 wrong either way).
+- The scores are the outputs of the released ONNX package (CPU, fp32), identical to the PyTorch fp32 outputs on all 7,789 Read boxes. The CUDA backend runs the dense network in fp16: on Read v1.3 its per-image output differs from the CPU output on 5 of 7,789 boxes (EM 89.38 vs 89.40), its per-page batched output on 7 boxes (EM 89.40, all 7 wrong either way).
 
 ## Acknowledgements
 

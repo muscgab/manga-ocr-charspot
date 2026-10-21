@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文 · [GitHub](https://github.com/muscgab/manga-ocr-charspot) · [Hugging Face](https://huggingface.co/muscgab/manga-ocr-charspot-nano) · [ModelScope](https://modelscope.cn/models/muscgab/manga-ocr-charspot-nano) · [技术报告](TECHNICAL_REPORT_zh.md)
 
-日文漫画文本框 OCR，1.7M 参数。模型在裁好的文本框里检测每一个字、逐字分类，再用一个小的阅读顺序模块把字排成文本。没有文本解码器。除了文字，还输出每个字的框和分数。
+日文漫画文本框 OCR，1.7M 参数。模型在裁好的文本框里检测每一个字、逐字分类，再用一个小的阅读顺序模块把字排成文本。没有文本解码器。除了文字，还输出每个字的框和分数。同一设计的大号版本 [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small)（11M 参数）更准（Read v1.3 EM 92.37 对 89.40），CPU 上约慢 2.8 倍。
 
 <img src="samples/char_boxes.png" width="100%">
 
@@ -12,29 +12,31 @@
 
 ### JMangaBench_Read v1.3（同领域；未用于训练和选模型）
 
-[JMangaBench_Read v1.3.1](https://github.com/muscgab/JMangaBench_Read)，7,789 框，官方打分脚本（RIN v1.1）。"新增" = v1.3 新加的 4,660 框；Read v1.2 是开发集（见[评测说明](#评测说明)）。
+[JMangaBench_Read v1.3.2](https://github.com/muscgab/JMangaBench_Read)，7,789 框，官方打分脚本（RIN v1.2）。"新增" = v1.3 新加的 4,660 框；Read v1.2 是开发集（见[评测说明](#评测说明)）。
 
 | 模型 | 参数 | 综合分 ↑ | CER % ↓ | EM % ↑ | EM 新增 % ↑ | EM 印刷 % ↑ | EM 非印刷 % ↑ |
 |---|---|---|---|---|---|---|---|
-| **manga-ocr-charspot-nano** | **1.7M** | 95.74 | 2.14 | 89.38 | 89.55 | **95.59** | 70.29 |
+| **manga-ocr-charspot-nano** | **1.7M** | 95.75 | 2.14 | 89.40 | 89.57 | 95.59 | 70.35 |
+| [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small) | 11M | 97.17 | 1.37 | 92.37 | 92.62 | 96.49 | 79.71 |
 | manga-ocr-nar-small | 54M | 97.29 | 1.71 | 91.36 | 91.65 | 94.74 | 80.96 |
 | manga-ocr-nar-small-distil | 30M | 96.40 | 2.29 | 89.09 | 88.95 | 93.21 | 76.41 |
-| Hayai v2.5 Nova p384 | 157M | 96.64 | 2.38 | 88.18 | 88.41 | 91.93 | 76.62 |
-| PaddleOCR-VL-For-Manga | 959M | 95.04 | 1.99 | 87.89 | 87.92 | 95.17 | 65.53 |
+| Hayai v2.5 Nova p384 | 157M | 96.64 | 2.37 | 88.20 | 88.45 | 91.95 | 76.67 |
+| PaddleOCR-VL-For-Manga | 959M | 95.04 | 1.99 | 87.91 | 87.94 | 95.17 | 65.59 |
 | mangaOCR | 111M | 90.27 | 4.81 | 78.51 | 78.48 | 88.34 | 48.27 |
 
 EM：归一化后预测与标签完全一致的框所占比例；CER：总编辑距离除以标签总字数。综合分（Composite）是 Read 的排名指标：1 − 归一化编辑距离，印刷与非印刷各占一半。本模型非印刷较弱，所以综合分低于 Nova，而 EM 高于 Nova。
 
 ### Manga109-s（不同领域；未用于训练）
 
-Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用数据集自带的框裁图；标签和预测都用 RIN v1.1 归一化，EM、CER 定义同上。在 Manga109-s 上训练过的模型（Hayai、mangaOCR）不列入。baberuOCR v1.1（训练数据未公开）用 Read 排行榜的生成设置；Preview 即 [manga-ocr-nar-preview](https://huggingface.co/muscgab/manga-ocr-nar-preview)。
+Manga109-s 全部 123,014 个文本标注（商业漫画扫描，87 册），用数据集自带的框裁图；标签和预测都用 RIN v1.2 归一化，EM、CER 定义同上。在 Manga109-s 上训练过的模型（Hayai、mangaOCR）不列入。baberuOCR v1.1（训练数据未公开）用 Read 排行榜的生成设置；Preview 即 [manga-ocr-nar-preview](https://huggingface.co/muscgab/manga-ocr-nar-preview)。
 
 | 模型 | 参数 | EM % ↑ | CER % ↓ | EM 1–4 字 | 5–16 | 17–32 | > 32 |
 |---|---|---|---|---|---|---|---|
 | **manga-ocr-charspot-nano** | **1.7M** | 89.10 | 1.98 | 94.27 | 90.37 | 84.46 | 60.21 |
+| [manga-ocr-charspot-small](https://huggingface.co/muscgab/manga-ocr-charspot-small) | 11M | 91.13 | 1.44 | 93.93 | 92.03 | 88.18 | 75.11 |
 | manga-ocr-nar-small | 54M | 92.08 | 1.39 | 95.92 | 92.23 | 90.11 | 74.39 |
 | baberuOCR v1.1 | 113M | 86.68 | 2.51 | 94.73 | 87.92 | 79.75 | 54.40 |
-| Preview | 196M | 86.51 | 2.46 | 91.74 | 87.30 | 83.22 | 55.59 |
+| Preview | 196M | 86.52 | 2.46 | 91.74 | 87.30 | 83.22 | 55.59 |
 
 各长度档框数：26,336 / 65,916 / 27,580 / 3,182。
 
@@ -114,7 +116,7 @@ ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA gra
 
 ## 局限
 
-- **非印刷体**：Read v1.3 上 EM 70.29，manga-ocr-nar-small 为 80.96。每个字只按自身特征分类，没有语言上下文；潦草手写中的形近字是主要错误。
+- **非印刷体**：Read v1.3 上 EM 70.35，manga-ocr-nar-small 为 80.96。每个字只按自身特征分类，没有语言上下文；潦草手写中的形近字是主要错误。
 - **横排**：Read 的 439 个横排框上 EM 65.83，manga-ocr-nar-small 为 84.51。
 - **长框**：超过 32 字时，Manga109-s 上（3,182 框）60.21，manga-ocr-nar-small 为 74.39；Read 上（169 框）71.01 对 73.96。
 - 真实数据的监督只覆盖模型在该裁图上已经读对的字；从来读不对的字只能从合成数据学。
@@ -124,7 +126,7 @@ ocr.warmup()                            # CUDA 后端：一次性捕获 CUDA gra
 
 - Read v1.2（3,142 框，属于 v1.3 的一部分）是开发集：用于选检查点、定 NMS 阈值和错误分析。v1.3 新增的 4,660 框没有参与任何决定。
 - Manga109-s 没有用于训练、选模型或调参。
-- 以上成绩来自发布的 ONNX 包（CPU，fp32），与 PyTorch fp32 输出在 Read 全部 7,789 框上逐框一致。CUDA 后端的稠密网络用 fp16：在 Read v1.3 上，单张输出有 5 框与 CPU 不同（EM 89.37 对 89.38），按页合批输出有 7 框不同（EM 89.38，这 7 框两边都读错）。
+- 以上成绩来自发布的 ONNX 包（CPU，fp32），与 PyTorch fp32 输出在 Read 全部 7,789 框上逐框一致。CUDA 后端的稠密网络用 fp16：在 Read v1.3 上，单张输出有 5 框与 CPU 不同（EM 89.38 对 89.40），按页合批输出有 7 框不同（EM 89.40，这 7 框两边都读错）。
 
 ## 致谢
 
